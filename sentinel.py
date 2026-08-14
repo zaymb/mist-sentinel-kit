@@ -43,7 +43,8 @@ ALL_EVENTS = [
 
 DEFAULT_INSTANT = ["new_issue", "new_pr", "pr_merged", "pr_closed", "pr_review"]
 
-PKG_RE = re.compile(r"(?<![0-9A-Za-z])P([1-9][0-9]?)(?![0-9])")
+PKG_RE = re.compile(r"(?<![0-9A-Za-z])P([1-9][0-9]*)(?![0-9])", re.IGNORECASE)
+PKG_MATCH_RE = re.compile(r"P[1-9][0-9]*", re.IGNORECASE)
 
 
 # ------------------------------------------------------------------ helpers
@@ -62,7 +63,7 @@ def truncate(text: str, limit: int = TITLE_MAX) -> str:
 
 
 def package_tag(title: str) -> str | None:
-    """Return 'P4' if the title carries a P1-P9 package marker, else None."""
+    """Return 'P4' if the title carries a positive package marker, else None."""
     m = PKG_RE.search(title or "")
     return "P" + m.group(1) if m else None
 
@@ -267,6 +268,9 @@ class Sentinel:
             return match[1:] == ev["number"]
         if match.isdigit():
             return match == ev["number"]
+        # 包号必须完整匹配：订 P1 不得把 P10 的事件也收进来。
+        if PKG_MATCH_RE.fullmatch(match):
+            return package_tag(ev["title"] or "") == match.upper()
         return match.lower() in (ev["title"] or "").lower()
 
     # ---- delivery ------------------------------------------------------

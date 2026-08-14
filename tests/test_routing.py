@@ -18,9 +18,19 @@ class RoutingTests(unittest.TestCase):
             dry_run=True,
         )
 
-    def test_automatic_package_tag_accepts_two_digits(self):
+    def test_automatic_package_tag_accepts_unbounded_digits(self):
         self.assertEqual(package_tag("认领件 P10：下一批"), "P10")
         self.assertEqual(package_tag("P99 final"), "P99")
+        self.assertEqual(package_tag("P1000 future"), "P1000")
+
+    def test_package_subscription_does_not_leak_into_longer_number(self):
+        sentinel = self.make_sentinel([{"match": "P1", "events": "*"}])
+
+        p1 = {"event": "new_issue", "number": "1", "title": "认领件 P1：存储"}
+        p10 = {"event": "new_issue", "number": "10", "title": "认领件 P10：新主线"}
+
+        self.assertTrue(sentinel.subscribed(p1))
+        self.assertFalse(sentinel.subscribed(p10))
 
     def test_custom_label_routes_a_non_package_mainline(self):
         sentinel = self.make_sentinel(
