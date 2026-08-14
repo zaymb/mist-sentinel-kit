@@ -10,9 +10,10 @@
   "issue_limit": 100,
   "pr_limit": 60,
 
-  "_subscriptions": "从上往下匹配，命中任意一条就投递。match 是标题子串（不分大小写）、#编号、或 * 全场；events 是事件名数组或 *。",
+  "_subscriptions": "从上往下匹配，命中任意一条就投递。match 是标题子串（不分大小写）、#编号、或 * 全场；events 是事件名数组或 *；label 可选，用来覆盖播报前缀。多条命中时第一条决定 label，具体规则放在 * 前面。",
   "subscriptions": [
     { "match": "P4", "events": ["new_issue", "issue_comment", "issue_closed"] },
+    { "match": "memory-v2", "label": "M4-next", "events": "*" },
     { "match": "#16", "events": "*" },
     { "match": "*", "events": ["new_pr", "pr_merged", "pr_closed"] }
   ],
