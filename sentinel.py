@@ -53,6 +53,10 @@ DEFAULT_INSTANT = [
     "pr_review",
 ]
 
+# full_text 订阅的护栏：一次最多带几条评论正文、每条最多多少字符
+FULLTEXT_MAX_ITEMS = 3
+FULLTEXT_MAX_CHARS = 1200
+
 PKG_RE = re.compile(r"(?<![0-9A-Za-z])P([1-9][0-9]*)(?![0-9])", re.IGNORECASE)
 PKG_MATCH_RE = re.compile(r"P[1-9][0-9]*", re.IGNORECASE)
 
@@ -69,6 +73,12 @@ def stamp() -> str:
 
 def truncate(text: str, limit: int = TITLE_MAX) -> str:
     text = " ".join(str(text).split())
+    return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def clip_body(text: str, limit: int = FULLTEXT_MAX_CHARS) -> str:
+    """正文保留换行，只截长度（TG 单条消息 4096 的余量内）。"""
+    text = str(text).replace("\r\n", "\n").strip()
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
@@ -194,7 +204,7 @@ class Sentinel:
             if delta > 0:
                 events.append(self.mk(
                     num, cur["title"], "issue_comment",
-                    f"+{delta} (共{cur['comments']})",
+                    f"+{delta} (共{cur['comments']})", delta=delta,
                 ))
             if cur.get("state") == "CLOSED" and prev.get("state") != "CLOSED":
                 events.append(self.mk(num, cur["title"], "issue_closed", ""))
@@ -221,7 +231,7 @@ class Sentinel:
             if delta > 0:
                 events.append(self.mk(
                     num, cur["title"], "pr_comment",
-                    f"+{delta} (共{cur['comments']})",
+                    f"+{delta} (共{cur['comments']})", delta=delta,
                 ))
             if cur.get("state") != prev.get("state"):
                 if cur.get("state") == "MERGED":
@@ -234,7 +244,8 @@ class Sentinel:
 
     # ---- event shaping -------------------------------------------------
 
-    def mk(self, number: str, title: str, event: str, detail: str) -> dict:
+    def mk(self, number: str, title: str, event: str, detail: str,
+           delta: int = 0) -> dict:
         tag = package_tag(title) or f"#{number}"
         # 订阅可带自定义 label：命中的第一条订阅若配了 label，覆盖默认标签
         sub = self.matching_sub({"event": event, "number": str(number), "title": title})
@@ -246,12 +257,48 @@ class Sentinel:
         parts.append(truncate(title))
         if not tag.startswith("#"):
             parts.append(f"(#{number})")
+        line = f"{now_hm()} " + " ".join(parts)
+        # full_text 订阅：评论/评审事件把正文附在摘要行之后（多行）。
+        # 只对显式配了 "full_text": true 的订阅拉正文，避免热闹房间刷屏；
+        # 拉取失败静默降级为纯摘要行（errors.log 已留一行）。
+        if isinstance(sub, dict) and sub.get("full_text") is True:
+            body = ""
+            if event in ("issue_comment", "pr_comment") and delta > 0:
+                body = self.fetch_comment_bodies(number, delta)
+            elif event == "pr_review":
+                body = self.fetch_latest_review_body(number)
+            if body:
+                line = line + "\n" + body
         return {
             "number": number,
             "title": title,
             "event": event,
-            "line": f"{now_hm()} " + " ".join(parts),
+            "line": line,
         }
+
+    def fetch_comment_bodies(self, number: str, count: int) -> str:
+        """最近 count 条评论（上限 FULLTEXT_MAX_ITEMS），每条「作者」+ 正文。"""
+        rows = self.gh_json(["api", f"repos/{self.repo}/issues/{number}/comments"])
+        if not isinstance(rows, list) or not rows:
+            return ""
+        picked = rows[-min(count, FULLTEXT_MAX_ITEMS):]
+        chunks = []
+        for r in picked:
+            login = ((r.get("user") or {}).get("login")) or "?"
+            body = clip_body(r.get("body") or "")
+            if body:
+                chunks.append(f"「{login}」\n{body}")
+        return "\n——\n".join(chunks)
+
+    def fetch_latest_review_body(self, number: str) -> str:
+        """最新一条 review 的正文（没有正文就返回空，摘要行已带结论）。"""
+        rows = self.gh_json(["api", f"repos/{self.repo}/pulls/{number}/reviews"])
+        if not isinstance(rows, list) or not rows:
+            return ""
+        last = rows[-1]
+        login = ((last.get("user") or {}).get("login")) or "?"
+        body = clip_body(last.get("body") or "")
+        return f"「{login}」\n{body}" if body else ""
 
     # ---- subscriptions -------------------------------------------------
 
