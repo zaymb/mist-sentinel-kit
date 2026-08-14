@@ -149,10 +149,18 @@ launchd 用上面的 `EnvironmentVariables`。
 `「作者」+ 正文`。`pr_review` 则带最新一条 review 的正文（没写正文就只有摘要行）。
 
 正文行怎么呈现由你的 `notify_cmd` 决定——事件文本第一行永远是摘要，
-其余行是正文，`notify_cmd` 拿到的 `{line}` 里含换行。比如接 Telegram 时
-可以把正文塞进可展开的折叠引用块（MarkdownV2 expandable blockquote），
-铃声露在外面，全文点开才看。只建议给自己盯的少数房间开，全仓开会很吵，
-而且每条命中事件多一次 GitHub API 调用。
+其余行是正文，`notify_cmd` 拿到的 `{line}` 里含换行。仓内自带
+`notifiers/telegram_expandable.py`：它用 Telegram 官方 HTML
+`<blockquote expandable>` 格式，把铃声留在外面、正文按编号折叠；正文中的
+HTML 符号会先转义，整条消息按 Bot API 的 4096 字符上限截断。
+
+通知器从环境变量读取 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`，token 不进 config：
+
+```json
+"notify_cmd": "python3 notifiers/telegram_expandable.py {line}"
+```
+
+只建议给自己盯的少数房间开，全仓开会很吵，而且每条命中事件多一次 GitHub API 调用。
 
 ## 事件谱
 
