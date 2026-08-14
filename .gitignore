@@ -1,0 +1,6 @@
+config.json
+state/
+sentinel.log
+*.tmp
+.testrun/
+__pycache__/

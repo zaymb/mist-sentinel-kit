@@ -1,0 +1,31 @@
+{
+  "_comment": "复制成 config.json 再改。JSON 不支持注释，本文件用 _ 开头的键当说明，脚本会忽略它们。",
+
+  "repo": "mist-agent-harness/mist-agent",
+
+  "_interval_hint": "仅供人看：你打算多久跑一轮（秒）。真正的调度由 cron/launchd 决定，脚本跑一次就退出。",
+  "interval_hint": 300,
+
+  "_issue_limit": "每轮向 gh 要多少条 issue / PR，默认 100 / 60，小仓不用改。",
+  "issue_limit": 100,
+  "pr_limit": 60,
+
+  "_subscriptions": "从上往下匹配，命中任意一条就投递。match 是标题子串（不分大小写）、#编号、或 * 全场；events 是事件名数组或 *。",
+  "subscriptions": [
+    { "match": "P4", "events": ["new_issue", "issue_comment", "issue_closed"] },
+    { "match": "#16", "events": "*" },
+    { "match": "*", "events": ["new_pr", "pr_merged", "pr_closed"] }
+  ],
+
+  "_digest": "instant_events 立刻投递，其余攒进 state/pending-batch.json，每 batch_window_runs 次运行冲一次批。想全部即时就把 instant_events 写成 \"*\"。",
+  "digest": {
+    "instant_events": ["new_issue", "new_pr", "pr_merged", "pr_closed", "pr_review"],
+    "batch_window_runs": 5
+  },
+
+  "_notify_cmd": "投递口。{line} 会被替换成事件行（已自动 shell 转义）。留空则打印到 stdout。例：\"ntfy publish mytopic {line}\" / \"terminal-notifier -message {line}\" / \"~/bin/my-notify.sh {line}\"",
+  "notify_cmd": "ntfy publish mytopic {line}",
+
+  "_state_dir": "可选，状态目录，默认是 config 旁边的 state/。",
+  "state_dir": null
+}
