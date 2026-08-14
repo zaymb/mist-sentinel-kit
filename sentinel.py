@@ -363,7 +363,9 @@ class Sentinel:
 
         out = []
         for ev in events:
-            if instant == "*" or ev["event"] in instant:
+            sub = self.matching_sub(ev)
+            sub_instant = isinstance(sub, dict) and sub.get("instant") is True
+            if instant == "*" or ev["event"] in instant or sub_instant:
                 out.append(ev["line"])
             else:
                 pending.append(ev["line"])

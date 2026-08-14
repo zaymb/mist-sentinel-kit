@@ -184,3 +184,5 @@ launchctl bootout gui/$(id -u)/local.sentinel 2>/dev/null; crontab -l | grep -v 
 MIT。拿去改，不用回来问。
 
 > 备注：包号标签由标题正则识别（P1、P10、P100……），非写死清单；无包号的条目用 `#编号` 作标签。新主线无需改代码，订阅表加行即可。纯包号订阅按完整编号匹配，订 P1 不会误收 P10。
+
+> 订阅项可加 `"instant": true`：该订阅命中的一切事件（含普通评论）即时投递，其余照攒批。全场即时用 `digest.instant_events: "*"`。默认评论攒批（不全开）。
