@@ -169,3 +169,5 @@ launchctl bootout gui/$(id -u)/local.sentinel 2>/dev/null; crontab -l | grep -v 
 ```
 
 MIT。拿去改，不用回来问。
+
+> 备注：包号标签由标题正则识别（P1–P99），非写死清单；无包号的条目用 `#编号` 作标签。新主线无需改代码，订阅表加行即可。

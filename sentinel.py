@@ -43,7 +43,7 @@ ALL_EVENTS = [
 
 DEFAULT_INSTANT = ["new_issue", "new_pr", "pr_merged", "pr_closed", "pr_review"]
 
-PKG_RE = re.compile(r"(?<![0-9A-Za-z])P([1-9])(?![0-9])")
+PKG_RE = re.compile(r"(?<![0-9A-Za-z])P([1-9][0-9]?)(?![0-9])")
 
 
 # ------------------------------------------------------------------ helpers
