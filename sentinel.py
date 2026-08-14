@@ -219,9 +219,12 @@ class Sentinel:
 
     # ---- event shaping -------------------------------------------------
 
-    @staticmethod
-    def mk(number: str, title: str, event: str, detail: str) -> dict:
+    def mk(self, number: str, title: str, event: str, detail: str) -> dict:
         tag = package_tag(title) or f"#{number}"
+        # 订阅可带自定义 label：命中的第一条订阅若配了 label，覆盖默认标签
+        sub = self.matching_sub({"event": event, "number": str(number), "title": title})
+        if isinstance(sub, dict) and isinstance(sub.get("label"), str) and sub["label"]:
+            tag = sub["label"]
         parts = [f"[{tag}]", event]
         if detail:
             parts.append(detail)
@@ -238,6 +241,10 @@ class Sentinel:
     # ---- subscriptions -------------------------------------------------
 
     def subscribed(self, ev: dict) -> bool:
+        return self.matching_sub(ev) is not None
+
+    def matching_sub(self, ev: dict):
+        """返回第一条命中的订阅（供自定义 label 用），没有则 None。"""
         subs = self.cfg.get("subscriptions") or []
         for sub in subs:
             if not isinstance(sub, dict):
@@ -246,10 +253,10 @@ class Sentinel:
                 continue
             wanted = sub.get("events", "*")
             if wanted == "*" or wanted == ["*"]:
-                return True
+                return sub
             if isinstance(wanted, list) and ev["event"] in wanted:
-                return True
-        return False
+                return sub
+        return None
 
     @staticmethod
     def match_item(match, ev: dict) -> bool:
