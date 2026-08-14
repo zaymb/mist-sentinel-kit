@@ -31,9 +31,11 @@ GH_TIMEOUT = 60
 
 ALL_EVENTS = [
     "new_issue",
+    "issue_reopened",
     "issue_comment",
     "issue_closed",
     "new_pr",
+    "pr_reopened",
     "pr_head",
     "pr_review",
     "pr_comment",
@@ -41,7 +43,15 @@ ALL_EVENTS = [
     "pr_closed",
 ]
 
-DEFAULT_INSTANT = ["new_issue", "new_pr", "pr_merged", "pr_closed", "pr_review"]
+DEFAULT_INSTANT = [
+    "new_issue",
+    "issue_reopened",
+    "new_pr",
+    "pr_reopened",
+    "pr_merged",
+    "pr_closed",
+    "pr_review",
+]
 
 PKG_RE = re.compile(r"(?<![0-9A-Za-z])P([1-9][0-9]*)(?![0-9])", re.IGNORECASE)
 PKG_MATCH_RE = re.compile(r"P[1-9][0-9]*", re.IGNORECASE)
@@ -188,6 +198,8 @@ class Sentinel:
                 ))
             if cur.get("state") == "CLOSED" and prev.get("state") != "CLOSED":
                 events.append(self.mk(num, cur["title"], "issue_closed", ""))
+            elif cur.get("state") == "OPEN" and prev.get("state") == "CLOSED":
+                events.append(self.mk(num, cur["title"], "issue_reopened", ""))
         return events
 
     def diff_prs(self, old: dict, new: dict) -> list[dict]:
@@ -216,6 +228,8 @@ class Sentinel:
                     events.append(self.mk(num, cur["title"], "pr_merged", ""))
                 elif cur.get("state") == "CLOSED":
                     events.append(self.mk(num, cur["title"], "pr_closed", ""))
+                elif cur.get("state") == "OPEN":
+                    events.append(self.mk(num, cur["title"], "pr_reopened", ""))
         return events
 
     # ---- event shaping -------------------------------------------------

@@ -112,7 +112,7 @@ launchd 用上面的 `EnvironmentVariables`。
 
 ```json
 "subscriptions": [
-  { "match": "*", "events": ["new_issue", "new_pr", "pr_merged", "pr_closed"] }
+  { "match": "*", "events": ["new_issue", "issue_reopened", "new_pr", "pr_reopened", "pr_merged", "pr_closed"] }
 ]
 ```
 
@@ -145,9 +145,11 @@ launchd 用上面的 `EnvironmentVariables`。
 | 事件 | 什么时候出 |
 | --- | --- |
 | `new_issue` | 新开了一个 issue |
+| `issue_reopened` | 已关闭的 issue 重新打开 |
 | `issue_comment` | issue 新增评论，带 `+N (共C)` |
 | `issue_closed` | issue 关闭 |
 | `new_pr` | 新开了一个 PR |
+| `pr_reopened` | 已关闭的 PR 重新打开 |
 | `pr_head` | PR 有新 commit（head 变了） |
 | `pr_review` | 审查结论翻转，如 `APPROVED` / `CHANGES_REQUESTED` / `CLEARED` |
 | `pr_comment` | PR 新增评论 |

@@ -15,12 +15,12 @@
     { "match": "P4", "events": ["new_issue", "issue_comment", "issue_closed"] },
     { "match": "memory-v2", "label": "M4-next", "events": "*" },
     { "match": "#16", "events": "*" },
-    { "match": "*", "events": ["new_pr", "pr_merged", "pr_closed"] }
+    { "match": "*", "events": ["new_pr", "pr_reopened", "pr_merged", "pr_closed"] }
   ],
 
   "_digest": "instant_events 立刻投递，其余攒进 state/pending-batch.json，每 batch_window_runs 次运行冲一次批。想全部即时就把 instant_events 写成 \"*\"。",
   "digest": {
-    "instant_events": ["new_issue", "new_pr", "pr_merged", "pr_closed", "pr_review"],
+    "instant_events": ["new_issue", "issue_reopened", "new_pr", "pr_reopened", "pr_merged", "pr_closed", "pr_review"],
     "batch_window_runs": 5
   },
 
